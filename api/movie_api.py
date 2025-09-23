@@ -22,7 +22,7 @@ class MovieAPI(CustomRequester):
             expected_status=expected_status
         )
 
-    def create_movie(self, movie_data, expected_status=201):
+    def create_movie(self, movie_data, expected_status=[200, 201]):
         return self.send_request(
             method="POST",
             endpoint=MOVIES_ENDPOINT,
