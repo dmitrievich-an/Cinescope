@@ -11,4 +11,5 @@ class User:
     @property
     def creds(self):
         """Возвращает кортеж (email, password)"""
+        print("debug breakpoint")
         return self.email, self.password
