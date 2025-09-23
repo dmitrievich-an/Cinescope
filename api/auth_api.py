@@ -23,12 +23,15 @@ class AuthAPI(CustomRequester):
             expected_status=expected_status
         )
 
-    def login_user(self, login_data, expected_status=[200, 201]):
+    def login_user(self, login_data, expected_status=None):
         """
         Авторизация пользователя.
         :param login_data: Данные для логина.
         :param expected_status: Ожидаемый статус-код.
         """
+        if expected_status is None:
+            expected_status = [200, 201]
+
         return self.send_request(
             method="POST",
             endpoint=LOGIN_ENDPOINT,
