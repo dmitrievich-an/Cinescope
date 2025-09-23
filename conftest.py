@@ -7,6 +7,8 @@ from faker import Faker
 
 from api.api_manager import ApiManager
 from constants import LOCATIONS, ADMIN_CREDS
+from entities.user import User
+from resources.user_creds import SuperAdminCreds
 from utils.data_generator import DataGenerator
 
 fake = Faker()
@@ -162,3 +164,40 @@ def invalid_movie_data(movie_data, request):
     key, bad_value = request.param
     invalid_data[key] = bad_value
     return invalid_data
+
+@pytest.fixture
+def user_session():
+    user_pool = []
+
+    def _create_user_session():
+        session = requests.Session()
+        user_session = ApiManager(session)
+        user_pool.append(user_session)
+        return user_session
+
+    yield _create_user_session
+
+    for user in user_pool:
+        user.close_session()
+
+@pytest.fixture
+def super_admin(user_session):
+    new_session = user_session()
+
+    super_admin = User(
+        SuperAdminCreds.USERNAME,
+        SuperAdminCreds.PASSWORD,
+        "[SUPER_ADMIN]",
+        new_session)
+
+    super_admin.api.auth_api.authenticate(super_admin.creds)
+    return super_admin
+
+@pytest.fixture(scope="function")
+def creation_user_data(test_user):
+    updated_data = test_user.copy()
+    updated_data.update({
+        "verified": True,
+        "banned": False
+    })
+    return updated_data
