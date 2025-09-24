@@ -50,14 +50,14 @@ class CustomRequester:
 
         return response
 
-    def _update_session_headers(self, session, **kwargs):
+    def _update_session_headers(self, **kwargs):
         """
         Обновление заголовков сессии.
         :param session: Объект requests.Session, предоставленный API-классом.
         :param kwargs: Дополнительные заголовки.
         """
         self.headers.update(kwargs)
-        session.headers.update(self.headers)
+        self.session.headers.update(self.headers)
 
     def log_request_and_response(self, response):
         try:

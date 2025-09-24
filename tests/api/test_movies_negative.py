@@ -18,18 +18,22 @@ class TestMoviesNegative:
         assert response.json()["message"], "Отсутствует сообщение об ошибке"
 
     # POST:
-    def test_create_movie_with_invalid_data(self, authorized_api, invalid_movie_data):
-        response = authorized_api.movie_api.create_movie(movie_data=invalid_movie_data, expected_status=400)
+    def test_create_movie_with_invalid_data(self, super_admin, invalid_movie_data):
+        response = super_admin.api.movie_api.create_movie(movie_data=invalid_movie_data, expected_status=400)
         assert response.json()["message"], "Отсутствует сообщение об ошибке"
 
     def test_create_movie_without_auth(self, api_manager_without_auth, movie_data):
         response = api_manager_without_auth.movie_api.create_movie(movie_data=movie_data, expected_status=401)
         assert response.json()["message"] == "Unauthorized", "Неверный текст об ошибке"
 
-    def test_create_movie_with_used_name(self, authorized_api, movie_data, temporary_movie):
+    def test_create_movie_without_access(self, common_user, movie_data):
+        response = common_user.api.movie_api.create_movie(movie_data=movie_data, expected_status=403)
+        assert response.json()["message"] == "Forbidden resource", "Неверный текст об ошибке"
+
+    def test_create_movie_with_used_name(self, super_admin, movie_data, temporary_movie):
         movie_data_with_used_name = {**movie_data, "name": temporary_movie["name"]}
 
-        response = authorized_api.movie_api.create_movie(
+        response = super_admin.api.movie_api.create_movie(
             movie_data=movie_data_with_used_name,
             expected_status=409)
         assert response.json()["message"] == "Фильм с таким названием уже существует", "Неверный текст об ошибке"
@@ -40,14 +44,19 @@ class TestMoviesNegative:
                                                                    expected_status=401)
         assert response.json()["message"] == "Unauthorized", "Неверный текст об ошибке"
 
-    def test_delete_movie_with_invalid_id(self, authorized_api):
+    def test_delete_movie_without_access(self, common_user, temporary_movie):
+        response = common_user.api.movie_api.delete_movie(movie_id=temporary_movie["id"],
+                                                                   expected_status=403)
+        assert response.json()["message"] == "Forbidden resource", "Неверный текст об ошибке"
+
+    def test_delete_movie_with_invalid_id(self, super_admin):
         invalid_id = random.choice([fake.word(), random.randint(123456789, 987654321)])
-        response = authorized_api.movie_api.delete_movie(movie_id=invalid_id, expected_status=404)
+        response = super_admin.api.movie_api.delete_movie(movie_id=invalid_id, expected_status=404)
         assert response.json()["message"], "Отсутствует сообщение об ошибке"
 
-    def test_delete_movie_with_invalid_param(self, authorized_api):
+    def test_delete_movie_with_invalid_param(self, super_admin):
         invalid_id = f"{fake.word()}%EE{fake.word()}"  # некоторые URL-кодированные байты (%XX) ломают запрос
-        response = authorized_api.movie_api.delete_movie(movie_id=invalid_id, expected_status=400)
+        response = super_admin.api.movie_api.delete_movie(movie_id=invalid_id, expected_status=400)
         assert response.json()["error"] == "Bad Request", "Отсутствует сообщение об ошибке"
 
     # PATCH:

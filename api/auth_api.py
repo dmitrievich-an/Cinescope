@@ -1,4 +1,4 @@
-from constants import REGISTER_ENDPOINT, LOGIN_ENDPOINT
+from constants.constants import REGISTER_ENDPOINT, LOGIN_ENDPOINT
 from custom_requester.custom_requester import CustomRequester
 
 
@@ -40,7 +40,7 @@ class AuthAPI(CustomRequester):
             need_logging=False
         )
 
-    def authenticate(self, session, user_creds):
+    def authenticate(self, user_creds):
         login_data = {
             "email": user_creds[0],
             "password": user_creds[1]
@@ -51,4 +51,4 @@ class AuthAPI(CustomRequester):
             raise KeyError("token is missing")
 
         token = response["accessToken"]
-        self._update_session_headers(session, **{"authorization": "Bearer " + token})
+        self._update_session_headers(**{"authorization": "Bearer " + token})

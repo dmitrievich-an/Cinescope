@@ -1,4 +1,4 @@
-from constants import BASE_URL_API, MOVIES_ENDPOINT
+from constants.constants import BASE_URL_API, MOVIES_ENDPOINT
 from custom_requester.custom_requester import CustomRequester
 
 
@@ -14,11 +14,10 @@ class MovieAPI(CustomRequester):
             expected_status=expected_status
         )
 
-    def get_movie_by_id(self, params=None, expected_status=200, movie_id=None):
+    def get_movie_by_id(self, expected_status=200, movie_id=None):
         return self.send_request(
             method="GET",
             endpoint=f"{MOVIES_ENDPOINT}/{movie_id}",
-            params=params,
             expected_status=expected_status
         )
 
@@ -33,15 +32,20 @@ class MovieAPI(CustomRequester):
             expected_status=expected_status
         )
 
-    def delete_movie(self, expected_status=200, movie_id=None, params=None):
+    def delete_movie(self, expected_status=None, movie_id=None):
+        if expected_status is None:
+            expected_status = [200, 201]
+
         return self.send_request(
             method="DELETE",
             endpoint=f"{MOVIES_ENDPOINT}/{movie_id}",
-            expected_status=expected_status,
-            params=params
+            expected_status=expected_status
         )
 
-    def update_movie(self, movie_data, movie_id=None, expected_status=200):
+    def update_movie(self, movie_data, movie_id=None, expected_status=None):
+        if expected_status is None:
+            expected_status = [200, 201]
+
         return self.send_request(
             method="PATCH",
             endpoint=f"{MOVIES_ENDPOINT}/{movie_id}",
