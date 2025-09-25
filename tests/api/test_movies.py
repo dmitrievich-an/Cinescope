@@ -50,10 +50,12 @@ class TestMovies:
         response = api_manager.movie_api.get_movie_by_id(movie_id=movie_id)
         assert response.json()["id"], "Афиша не получена"
 
+    @pytest.mark.slow
     def test_create_movie(self, authorized_api: ApiManager, movie_data):
         response = authorized_api.movie_api.create_movie(movie_data=movie_data, expected_status=[200, 201])
         assert response.json()["name"], "Фильм не создан"
 
+    @pytest.mark.slow
     def test_delete_movie(self, super_admin, temporary_movie):
         fix_movie_id = temporary_movie["id"]
         response = super_admin.api.movie_api.delete_movie(movie_id=fix_movie_id, expected_status=[200, 201])

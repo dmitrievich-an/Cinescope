@@ -1,5 +1,7 @@
 import random
 
+import pytest
+
 from conftest import fake
 
 
@@ -26,6 +28,7 @@ class TestMoviesNegative:
         response = api_manager_without_auth.movie_api.create_movie(movie_data=movie_data, expected_status=401)
         assert response.json()["message"] == "Unauthorized", "Неверный текст об ошибке"
 
+    @pytest.mark.slow
     def test_create_movie_without_access(self, common_user, movie_data):
         response = common_user.api.movie_api.create_movie(movie_data=movie_data, expected_status=403)
         assert response.json()["message"] == "Forbidden resource", "Неверный текст об ошибке"
@@ -44,6 +47,7 @@ class TestMoviesNegative:
                                                                    expected_status=401)
         assert response.json()["message"] == "Unauthorized", "Неверный текст об ошибке"
 
+    @pytest.mark.slow
     def test_delete_movie_without_access(self, common_user, temporary_movie):
         response = common_user.api.movie_api.delete_movie(movie_id=temporary_movie["id"],
                                                                    expected_status=403)
