@@ -10,7 +10,8 @@ class UserModelOrTestUser(BaseModel):
     email: str
     fullName: str
     password: str
-    passwordRepeat: str = Field(..., min_length=1, max_length=20, description="passwordRepeat должен полностью совпадать с полем password")
+    passwordRepeat: str = Field(..., min_length=1, max_length=20,
+                                description="passwordRepeat должен полностью совпадать с полем password")
     roles: list[Roles] = [Roles.USER]
     verified: Optional[bool] = True
     banned: Optional[bool] = False
@@ -36,12 +37,13 @@ class UserModelOrTestUser(BaseModel):
     # class Config:
     #     use_enum_values = True
 
+
 class RegisterUserResponse(BaseModel):
     id: str
     email: str = Field(pattern=r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$", description="Email пользователя")
     fullName: str = Field(min_length=1, max_length=100, description="Полное имя пользователя")
-    verified: bool
-    banned: bool
+    verified: Optional[bool] = False
+    banned: Optional[bool] = False
     roles: List[Roles]
     createdAt: str = Field(description="Дата и время создания пользователя в формате ISO 8601")
 

@@ -4,10 +4,13 @@ import random
 import pytest
 import requests
 from faker import Faker
+from sqlalchemy.orm import Session
 
 from api.api_manager import ApiManager
 from constants.constants import LOCATIONS, ADMIN_CREDS
 from constants.roles import Roles
+from db_requester.db_client import get_db_session
+from db_requester.db_helper import DBHelper
 from entities.user import User
 from models.base_models import UserModelOrTestUser
 from resources.user_creds import SuperAdminCreds
@@ -166,6 +169,7 @@ def invalid_movie_data(movie_data, request):
     invalid_data[key] = bad_value
     return invalid_data
 
+
 @pytest.fixture
 def user_session():
     user_pool = []
@@ -181,6 +185,7 @@ def user_session():
     for user in user_pool:
         user.close_session()
 
+
 @pytest.fixture
 def super_admin(user_session):
     new_session = user_session()
@@ -193,6 +198,7 @@ def super_admin(user_session):
 
     super_admin.api.auth_api.authenticate(super_admin.creds)
     return super_admin
+
 
 @pytest.fixture(scope="function")
 def creation_user_data(test_user) -> UserModelOrTestUser:
@@ -212,6 +218,7 @@ def creation_user_data(test_user) -> UserModelOrTestUser:
         banned=test_user.banned
     )
 
+
 @pytest.fixture
 def common_user(user_session, super_admin, creation_user_data):
     new_session = user_session()
@@ -226,6 +233,7 @@ def common_user(user_session, super_admin, creation_user_data):
     common_user.api.auth_api.authenticate(common_user.creds)
     return common_user
 
+
 @pytest.fixture
 def admin_user(user_session, super_admin, creation_user_data):
     new_session = user_session()
@@ -239,3 +247,35 @@ def admin_user(user_session, super_admin, creation_user_data):
     super_admin.api.user_api.create_user(creation_user_data)
     admin_user.api.auth_api.authenticate(admin_user.creds)
     return admin_user
+
+
+@pytest.fixture(scope="module")
+def db_session() -> Session:
+    """
+    Фикстура, которая создает и возвращает сессию для работы с базой данных
+    После завершения теста сессия автоматически закрывается
+    """
+    db_session = get_db_session()
+    yield db_session
+    db_session.close()
+
+
+@pytest.fixture(scope="function")
+def db_helper(db_session) -> DBHelper:
+    """
+    Фикстура для экземпляра хелпера
+    """
+    db_helper = DBHelper(db_session)
+    return db_helper
+
+
+@pytest.fixture
+def created_test_user(db_helper):
+    """
+    Создает тестового пользователя в БД
+    и удаляет после завершения теста
+    """
+    user = db_helper.create_test_user(DataGenerator.generate_user_data())
+    yield user
+    if db_helper.get_user_by_id(user.id):
+        db_helper.delete_user(user)

@@ -1,0 +1,87 @@
+import uuid
+from datetime import datetime
+
+from sqlalchemy.orm import Session
+
+from api.api_manager import ApiManager
+from conftest import api_manager
+from constants.locarions import Locations
+from db_models.accounts_transaction_template import AccountTransactionTemplate
+from db_models.movies import MovieDBModel
+from utils.data_generator import DataGenerator
+
+
+class TestDataBase:
+
+    def test_db_requests(self, db_helper, created_test_user):
+        assert created_test_user == db_helper.get_user_by_id(created_test_user.id)
+        assert db_helper.user_exists_by_email("api1@gmail.com")
+
+    def test_crud_movie(self, db_helper, super_admin):
+        movie_name = DataGenerator.generate_random_movie_name()
+
+        movie = MovieDBModel(
+            name=f"{movie_name} 2",
+            price=500,
+            description="A mind-bending thriller by Christopher Nolan.",
+            image_url="https://example.com/inception.jpg",
+            location=Locations.MSK,
+            published=True,
+            rating=3.6,
+            genre_id=1,
+            created_at=datetime.now()
+        ).to_dict()
+
+        # Существующий фильм
+        existing_film = db_helper.get_first_movie().name
+
+        # Проверяем, что создаваемого фильма не существует
+        assert not db_helper.movie_exists_by_name(movie["name"]), f"Найден фильм с названием '{movie["name"]}'"
+
+        # Создаем фильм
+        test_movie = db_helper.create_test_movie(movie)
+
+        # Проверяем, что фильм можно найти по названию
+        assert db_helper.movie_exists_by_name(test_movie.name), f"Фильм с названием '{test_movie.name}' не найден"
+
+        # Удаляем через апи
+        super_admin.api.movie_api.delete_movie(movie_id=test_movie.id)
+
+        # Проверяем, что фильм нельзя найти по названию
+        assert not db_helper.movie_exists_by_name(test_movie.name), \
+            f"Фильм с названием '{test_movie.name}' найден после удаления через API"
+
+    def test_accounts_transaction_template(self, db_session: Session, api_manager: ApiManager):
+        # Создаем новые записи в БД
+        stan = AccountTransactionTemplate(user=f"Stan_{uuid.uuid4()}", balance=1000)
+        bob = AccountTransactionTemplate(user=f"Bob_{uuid.uuid4()}", balance=500)
+
+        # Добавляем записи в сессию
+        db_session.add_all([stan, bob])
+        # Это аналог записи db_session.add(stan)
+        #                   db_session.add(bob)
+
+        # Фиксируем изменения в БД
+        db_session.commit()
+
+        # Проверяем начальные балансы
+        assert stan.balance == 1000
+        assert bob.balance == 500
+
+        try:
+            # Переводим 200 шекелей
+            api_manager.movie_api.transfer_money(db_session, stan, bob, 200)
+
+            assert stan.balance == 800
+            assert bob.balance == 700
+
+        except Exception as e:
+            # Откатываем транзакцию в случае ошибки
+            db_session.rollback()
+            assert False, f"Произошла ошибка: {e}"
+        finally:
+            # Удаляем данные для тестирования из БД
+            db_session.delete(stan)
+            db_session.delete(bob)
+            # Применяем (фиксируем) изменения в БД
+            db_session.commit()

@@ -1,7 +1,11 @@
+import datetime
 import random
 import string
 
+from uuid import uuid4
 from faker import Faker
+
+from constants.roles import Roles
 
 fake = Faker()
 
@@ -48,3 +52,22 @@ class DataGenerator:
     def generate_random_movie_name():
         movie_name = " ".join(fake.words(random.randint(2, 4))).title()
         return movie_name
+
+    @staticmethod
+    def generate_random_int() -> int:
+        return random.randint(3, 33)
+
+    @staticmethod
+    def generate_user_data() -> dict:
+        """Генерирует данные для тестового пользователя"""
+        return {
+            "id": f"{uuid4()}",
+            "email": DataGenerator.generate_random_email(),
+            "full_name": DataGenerator.generate_random_name(),
+            "password": DataGenerator.generate_random_password(),
+            "created_at": datetime.datetime.now(),
+            "updated_at": datetime.datetime.now(),
+            "verified": False,
+            "banned": False,
+            "roles": [Roles.USER]
+        }

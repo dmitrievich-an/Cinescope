@@ -1,9 +1,6 @@
-import random
-
 import pytest
 
 from api.api_manager import ApiManager
-from conftest import fake
 
 
 class TestMovies:
@@ -11,23 +8,6 @@ class TestMovies:
         response = api_manager.movie_api.get_movies()
         assert response.json()["movies"], "Афиши не получены"
 
-    # def test_get_movies_with_params(self, api_manager: ApiManager, query_params):
-    #     response = api_manager.movie_api.get_movies(params=query_params)
-    #     assert "movies" in response.json(), "Афиши не получены"
-
-    # @pytest.mark.parametrize(
-    #     "min_price,max_price,genre_id",
-    #     [
-    #         (random.randint(1,400), random.randint(401,1000), random.randint(1,10)),
-    #         (random.randint(1,400), random.randint(401,1000), random.randint(11,99)),
-    #         (random.randint(9999,9999), random.randint(99999,99999), random.randint(1,10)),
-    #         (random.randint(-10,-1), random.randint(401,1000), random.randint(1,10)),
-    #         (random.randint(200,400), random.randint(100,199), random.randint(1,10)),
-    #         ("abc", random.randint(401,1000), random.randint(1,10)),
-    #     ],
-    #     ids=["valid_params", "invalid_genre_id" ,"very_big_price", "negative_price", "min_price_over_max_price",
-    #          "string_in_price"]
-    # )
     @pytest.mark.parametrize(
         "min_price,max_price,genre_id",
         [

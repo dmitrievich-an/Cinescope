@@ -1,5 +1,8 @@
+from sqlalchemy.orm import Session
+
 from constants.constants import BASE_URL_API, MOVIES_ENDPOINT
 from custom_requester.custom_requester import CustomRequester
+from db_models.accounts_transaction_template import AccountTransactionTemplate
 
 
 class MovieAPI(CustomRequester):
@@ -24,7 +27,6 @@ class MovieAPI(CustomRequester):
     def create_movie(self, movie_data, expected_status=None):
         if expected_status is None:
             expected_status = [200, 201]
-
         return self.send_request(
             method="POST",
             endpoint=MOVIES_ENDPOINT,
@@ -52,3 +54,36 @@ class MovieAPI(CustomRequester):
             data=movie_data,
             expected_status=expected_status
         )
+
+    @staticmethod
+    def transfer_money(session: Session, from_account, to_account, amount):
+        """
+        Транзакция перевода денег с одного баланса на другой
+        :param session: Сессия SQLAlchemy
+        :param from_account: откуда списываем деньги
+        :param to_account: куда зачисляем
+        :param amount: сколько переводим
+        """
+
+        # Получаем счета
+        from_account = (
+            session.query(AccountTransactionTemplate)
+            .filter(AccountTransactionTemplate.user == from_account.user)  # filter принимает логические выражения
+            .one()
+        )
+        to_account = (
+            session.query(AccountTransactionTemplate)
+            .filter_by(user=to_account.user)  # filter_by принимает именованные аргументы
+            .one()
+        )
+
+        # Проверяем, что денег на счете достаточно для перевода
+        if from_account.balance < amount:
+            raise ValueError("Недостаточно средств на счете отправителя")
+
+        # Переводим деньги
+        from_account.balance -= amount
+        to_account.balance += amount
+
+        # Сохраняем изменения
+        session.commit()
