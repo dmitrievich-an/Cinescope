@@ -18,3 +18,7 @@ typing_extensions==4.15.0
 tzdata==2025.2
 urllib3==2.5.0
 SQLAlchemy~=2.0.43
+pytz~=2025.2
+pytest-mock~=3.15.1
+uvicorn~=0.37.0
+fastapi~=0.119.0
