@@ -1,3 +1,4 @@
+import allure
 from sqlalchemy.orm import Session
 
 from constants.constants import BASE_URL_API, MOVIES_ENDPOINT
@@ -56,6 +57,11 @@ class MovieAPI(CustomRequester):
         )
 
     @staticmethod
+    @allure.step("Функция перевода денег: transfer_money")
+    @allure.description("""
+                функция выполняющая транзакцию, имитация вызова функции на стороне тестируемого сервиса
+                и вызывая метод transfer_money, мы как будто бы делаем запрос в api_manager.movies_api.transfer_money
+                """)
     def transfer_money(session: Session, from_account, to_account, amount):
         """
         Транзакция перевода денег с одного баланса на другой
@@ -65,25 +71,25 @@ class MovieAPI(CustomRequester):
         :param amount: сколько переводим
         """
 
-        # Получаем счета
-        from_account = (
-            session.query(AccountTransactionTemplate)
-            .filter(AccountTransactionTemplate.user == from_account.user)  # filter принимает логические выражения
-            .one()
-        )
-        to_account = (
-            session.query(AccountTransactionTemplate)
-            .filter_by(user=to_account.user)  # filter_by принимает именованные аргументы
-            .one()
-        )
+        with allure.step(" Получаем счета"):
+            from_account = (
+                session.query(AccountTransactionTemplate)
+                .filter(AccountTransactionTemplate.user == from_account.user)  # filter принимает логические выражения
+                .one()
+            )
+            to_account = (
+                session.query(AccountTransactionTemplate)
+                .filter_by(user=to_account.user)  # filter_by принимает именованные аргументы
+                .one()
+            )
 
-        # Проверяем, что денег на счете достаточно для перевода
-        if from_account.balance < amount:
-            raise ValueError("Недостаточно средств на счете отправителя")
+        with allure.step("Проверяем, что на счете достаточно средств"):
+            if from_account.balance < amount:
+                raise ValueError("Недостаточно средств на счете отправителя")
 
-        # Переводим деньги
-        from_account.balance -= amount
-        to_account.balance += amount
+        with allure.step("Выполняем перевод"):
+            from_account.balance -= amount
+            to_account.balance += amount
 
-        # Сохраняем изменения
-        session.commit()
+        with allure.step("Сохраняем изменения"):
+            session.commit()

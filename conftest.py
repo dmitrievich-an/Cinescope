@@ -1,5 +1,6 @@
 import copy
 import random
+import time
 
 import pytest
 import requests
@@ -279,3 +280,8 @@ def created_test_user(db_helper):
     yield user
     if db_helper.get_user_by_id(user.id):
         db_helper.delete_user(user)
+
+@pytest.fixture
+def delay_between_retries():
+    time.sleep(2)  # Задержка в 2 секунды
+    yield

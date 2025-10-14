@@ -1,6 +1,8 @@
 import uuid
 from datetime import datetime
 
+import allure
+import pytest
 from sqlalchemy.orm import Session
 
 from api.api_manager import ApiManager
@@ -51,37 +53,48 @@ class TestDataBase:
         assert not db_helper.movie_exists_by_name(test_movie.name), \
             f"Фильм с названием '{test_movie.name}' найден после удаления через API"
 
+@allure.epic("Тестирование транзакций")
+@allure.feature("Тестирование транзакций между счетами")
+class TestAccountTransactionTemplate:
+    @allure.story("Корректность перевода между двумя счетами")
+    @allure.description("""
+        Этот тест проверяет корректность перевода денег между двумя счетами.
+        Шаги:
+        1. Создание двух счетов: Stan и Bob.
+        2. Перевод 200 единиц от Stan к Bob.
+        3. Проверка изменения балансов.
+        4. Очистка тестовых данных.
+        """)
+    @allure.severity(allure.severity_level.CRITICAL)
+    @allure.label("qa_name", "Artem Dmitrievich")
+    @allure.title("Тест перевода 200 шекелей между счетами")
     def test_accounts_transaction_template(self, db_session: Session, api_manager: ApiManager):
-        # Создаем новые записи в БД
-        stan = AccountTransactionTemplate(user=f"Stan_{uuid.uuid4()}", balance=1000)
-        bob = AccountTransactionTemplate(user=f"Bob_{uuid.uuid4()}", balance=500)
+        # Подготовка к тесту
+        with allure.step("Создание тестовых данных в базе данных: счета Stan и Bob"):
+            stan = AccountTransactionTemplate(user=f"Stan_{uuid.uuid4()}", balance=1000)
+            bob = AccountTransactionTemplate(user=f"Bob_{uuid.uuid4()}", balance=500)
+            db_session.add_all([stan, bob])
+            db_session.commit()
 
-        # Добавляем записи в сессию
-        db_session.add_all([stan, bob])
-        # Это аналог записи db_session.add(stan)
-        #                   db_session.add(bob)
-
-        # Фиксируем изменения в БД
-        db_session.commit()
-
-        # Проверяем начальные балансы
-        assert stan.balance == 1000
-        assert bob.balance == 500
+        with allure.step("Проверяем начальные балансы"):
+            assert stan.balance == 1000
+            assert bob.balance == 500
 
         try:
-            # Переводим 200 шекелей
-            api_manager.movie_api.transfer_money(db_session, stan, bob, 200)
+            with allure.step("Выполняем перевод 200 шекелей от stan к bob"):
+                api_manager.movie_api.transfer_money(db_session, stan, bob, 200)
 
-            assert stan.balance == 800
-            assert bob.balance == 700
+            with allure.step("Проверяем, что балансы изменились"):
+                assert stan.balance == 800
+                assert bob.balance == 700
 
         except Exception as e:
-            # Откатываем транзакцию в случае ошибки
-            db_session.rollback()
-            assert False, f"Произошла ошибка: {e}"
+            with allure.step("ОШИБКА - откат транзакции"):
+                db_session.rollback()
+
+            pytest.fail(f"Ошибка при переводе денег: {e}")
         finally:
-            # Удаляем данные для тестирования из БД
-            db_session.delete(stan)
-            db_session.delete(bob)
-            # Применяем (фиксируем) изменения в БД
-            db_session.commit()
+            with allure.step("Удаляем данные для тестирования из базы"):
+                db_session.delete(stan)
+                db_session.delete(bob)
+                db_session.commit()
