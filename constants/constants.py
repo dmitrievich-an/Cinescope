@@ -9,3 +9,6 @@ HEADERS = {
 LOGIN_ENDPOINT = "/login"
 REGISTER_ENDPOINT = "/register"
 MOVIES_ENDPOINT = "/movies"
+GREEN = '\033[32m'
+RED = '\033[31m'
+RESET = '\033[0m'
