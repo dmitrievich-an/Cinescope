@@ -3,10 +3,13 @@
 .venv/
 .DS_Store
 /venv/
+/allure-results/
+/allure-report/
 __pycache__/
 *.db
 *.xlsx
 *.log
 *.csv
+*.png
 *.env
 .env
